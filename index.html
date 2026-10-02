@@ -41,7 +41,6 @@
       transition: background-color 0.2s ease;
     }
 
-    /* Screen Flash Overlay bei 00:00 */
     #flash-overlay {
       position: fixed;
       inset: 0;
@@ -80,7 +79,6 @@
     h2 { font-size: 1.05rem; font-weight: 700; }
     h3 { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
-    /* Buttons */
     .btn {
       background-color: var(--primary);
       color: #041019;
@@ -105,7 +103,7 @@
     .btn-crunch { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; }
     .btn-stretch { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; }
 
-    /* FOKUS-MODUS */
+    /* FOKUS-MODUS: Dimmt nur noch den Verlaufsplan darunter ab, Kasten bleibt voll bedienbar */
     body.focus-mode .dim-in-focus {
       opacity: 0.25;
       transition: opacity 0.25s ease;
@@ -118,19 +116,6 @@
       border-color: #38bdf8;
       box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
     }
-    body.focus-mode .timer-display {
-      transform: scale(1.05);
-      transition: transform 0.2s ease;
-    }
-
-    /* KOMPAKT-MODUS */
-    body.compact-mode .cockpit-card { padding: 8px 12px; }
-    body.compact-mode .timer-display { font-size: 2.8rem; margin: 2px 0; }
-    body.compact-mode .button-group-grid { gap: 4px; margin-top: 4px; }
-    body.compact-mode .btn-sm { padding: 4px 2px; font-size: 0.72rem; }
-    body.compact-mode .plan-table td,
-    body.compact-mode .plan-table th { padding: 6px 8px; font-size: 0.78rem; }
-    body.compact-mode .preview-box { padding: 4px 8px; margin-top: 4px; }
 
     .paste-box {
       width: 100%;
@@ -224,27 +209,28 @@
       50% { opacity: 0.55; }
     }
 
-    .btn-gong {
-      position: absolute;
-      right: 4px;
-      width: 42px;
-      height: 42px;
+    /* Gong Icon neben Uhrzeit */
+    .btn-gong-inline {
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: #1e293b;
       border: 1px solid #334155;
       color: #64748b;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 0.95rem;
       cursor: pointer;
       transition: all 0.15s ease;
+      vertical-align: middle;
+      padding: 0;
     }
-    .btn-gong.active {
+    .btn-gong-inline.active {
       background: rgba(245, 158, 11, 0.2);
       border-color: var(--warning);
       color: var(--warning);
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
     }
 
     .progress-bar-bg {
@@ -310,7 +296,7 @@
 
     .action-row {
       display: grid;
-      grid-template-columns: 2fr 1.35fr 1.15fr 1fr;
+      grid-template-columns: 2fr 1.2fr 1.2fr 1.3fr;
       gap: 6px;
       margin-top: 8px;
     }
@@ -426,6 +412,31 @@
     .tag-goal { background: #059669; color: #fff; }
     .tag-hard-end { background: #0284c7; color: #fff; }
 
+    /* Slot Button Leiste */
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .btn-slot {
+      padding: 7px 4px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      border-radius: 6px;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .btn-slot.has-content {
+      border-color: #38bdf8;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.08);
+    }
+
     .summary-table {
       width: 100%;
       border-collapse: collapse;
@@ -444,7 +455,6 @@
 </head>
 <body>
 
-  <!-- Screen Flash Element für 00:00 Phasenende -->
   <div id="flash-overlay"></div>
 
   <div class="container">
@@ -456,27 +466,41 @@
           <h1>Unterrichts-Cockpit & Phasen-Planer</h1>
           <div style="display:flex; gap: 6px;">
             <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 5px 10px;" onclick="copyPlanTransferCode()">
-              📋 Plan-Code kopieren
+              📋 Plan-Code
             </button>
             <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 5px 10px;" onclick="showProfileView()">
               📊 Schätzprofil
             </button>
           </div>
         </div>
-        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px; line-height: 1.4;">
-          Kopiere deine Unterrichtsplanung aus OneNote (PC oder Handy) hier hinein. Startzeit (z. B. <code>[07:45]</code>) und Dauern (z. B. <code>10'</code>) genügen.
-        </p>
       </div>
 
-      <div class="card">
-        <div id="paste-target" class="paste-box" contenteditable="true" placeholder="Tabelle aus OneNote oder PLAN:... Code hier einfügen..."></div>
-
-        <div style="display: flex; gap: 8px; margin-top: 10px;">
-          <button class="btn btn-secondary" style="flex:1" onclick="loadSamplePlan()">Beispiel laden</button>
+      <!-- Buttonleiste direkt ÜBER dem Eingabefeld -->
+      <div class="card" style="padding: 10px 14px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+          <button class="btn btn-secondary" style="flex:1" onclick="loadSamplePlan()">Beispiel</button>
           <button class="btn" style="flex:2" onclick="loadLessonData()">Unterricht laden ❯</button>
+          <button class="btn btn-danger" style="padding: 8px 14px;" onclick="clearPasteBox()" title="Eingabefeld leeren">✕</button>
         </div>
+
+        <!-- 5 Schnellspeicher-Slots -->
+        <div style="margin-bottom: 10px;">
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-weight: 600;">
+            Hinterlegte Stunden (Klick zum Laden):
+          </div>
+          <div class="slot-grid">
+            <button id="slot-btn-0" class="btn-slot" onclick="loadFromSlot(0)">[1] Leer</button>
+            <button id="slot-btn-1" class="btn-slot" onclick="loadFromSlot(1)">[2] Leer</button>
+            <button id="slot-btn-2" class="btn-slot" onclick="loadFromSlot(2)">[3] Leer</button>
+            <button id="slot-btn-3" class="btn-slot" onclick="loadFromSlot(3)">[4] Leer</button>
+            <button id="slot-btn-4" class="btn-slot" onclick="loadFromSlot(4)">[5] Leer</button>
+          </div>
+        </div>
+
+        <div id="paste-target" class="paste-box" contenteditable="true" placeholder="Tabelle aus OneNote hier einfügen..."></div>
       </div>
 
+      <!-- Schätzprofil Card -->
       <div id="profile-container" class="card" style="display:none; background: #111a2b;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <h2>Empirisches Phasen-Schätzprofil</h2>
@@ -496,7 +520,6 @@
     <!-- 2. RUNNING LESSON SCREEN (COCKPIT) -->
     <div id="screen-running" class="screen">
       
-      <!-- Start-Bereitschaftsbanner -->
       <div id="start-readiness-banner" class="start-prompt-banner">
         <div>
           <div style="font-weight: 700; color: #38bdf8; font-size: 0.95rem;">Unterricht bereit</div>
@@ -509,26 +532,11 @@
         </button>
       </div>
 
-      <!-- Quick Controls: Fokus, Kompakt, Puffer-Transfer -->
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
-        <button id="btn-transfer-buffer" class="btn-sm" style="background:#1e293b; color:#f59e0b; border-color:#d97706; padding: 4px 8px;" onclick="transferNextBufferToCurrentPhase()" title="Bucht die Minuten des nächsten Puffers sofort auf die laufende Phase um">
-          ➕ Puffer hierher
-        </button>
-        <div style="display: flex; gap: 6px;">
-          <button id="btn-toggle-focus" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="toggleFocusMode()">
-            🎯 Fokus: AUS
-          </button>
-          <button id="btn-toggle-compact" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="toggleCompactMode()">
-            📱 Kompakt: AUS
-          </button>
-        </div>
-      </div>
-
       <!-- Sticky Cockpit -->
       <div class="cockpit-sticky">
         <div id="current-phase-cockpit" class="card cockpit-card">
           
-          <div class="top-meta-bar dim-in-focus">
+          <div class="top-meta-bar">
             <div class="badge-group">
               <span id="lesson-progress-badge" class="badge">Phase 1 / 5</span>
               <span id="delay-status-badge" class="badge badge-ontime">Im Zeitplan</span>
@@ -536,8 +544,16 @@
             </div>
             
             <div style="display: flex; gap: 6px; align-items: center;">
+              <!-- Fokus-Button jetzt im Kasten links neben "Jetzt syncen" -->
+              <button id="btn-toggle-focus" class="btn-sm" style="padding: 3px 8px; background: #0c1322;" onclick="toggleFocusMode()">
+                Fokus
+              </button>
               <button class="btn-sm" style="padding: 3px 8px; background: #0c1322;" onclick="syncWithRealClock()" title="Springt zur geplanten Phase gemäß aktueller Uhrzeit">
                 ⏱ Jetzt syncen
+              </button>
+              <!-- Gong-Button inline direkt neben der Uhrzeit -->
+              <button id="btn-gong" class="btn-gong-inline" onclick="toggleGong()" title="Akustischer Gong bei Phasenende (Aktuell: AUS)">
+                🔔
               </button>
               <span id="realtime-clock" style="color: var(--text-muted); font-weight: 600;">12:00</span>
             </div>
@@ -545,40 +561,37 @@
 
           <div style="display: flex; justify-content: space-between; align-items: baseline;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <h3 id="current-phase-subtitle" class="dim-in-focus">AKTUELLE PHASE</h3>
+              <h3 id="current-phase-subtitle">AKTUELLE PHASE</h3>
               <span id="current-phase-tag-container"></span>
             </div>
-            <span style="font-size:0.7rem; color:var(--text-muted);" class="dim-in-focus">Wischen: 👈 Nächste | 👉 Pause</span>
+            <span style="font-size:0.7rem; color:var(--text-muted);">Wischen: 👈 Nächste | 👉 Puffer holen</span>
           </div>
           
           <div id="current-phase-name" style="font-size: 1.35rem; font-weight: 800; margin: 1px 0; color: #fff;">Begrüßung</div>
 
-          <!-- Timer & Gong -->
+          <!-- Timer -->
           <div class="timer-center-row">
             <div id="timer-display" class="timer-display">05:00</div>
-            <button id="btn-gong" class="btn-gong dim-in-focus" onclick="toggleGong()" title="Akustischer Gong bei Phasenende (Aktuell: AUS)">
-              🔔
-            </button>
           </div>
           
           <div class="progress-bar-bg">
             <div id="phase-progress-fill" class="progress-bar-fill"></div>
           </div>
 
-          <div class="delay-info-strip dim-in-focus">
+          <div class="delay-info-strip">
             <span id="phase-planned-time">Geplant: 5 Min</span>
             <span id="running-end-estimate" style="color: var(--primary);">Ende ca: --:--</span>
             <span id="phase-elapsed-time">Verstrichen: 00:00</span>
           </div>
 
-          <div class="button-group-grid dim-in-focus">
+          <div class="button-group-grid">
             <button class="btn-sm" onclick="adjustTime(-1)">-1 Min</button>
             <button class="btn-sm" onclick="adjustTime(+1)">+1 Min</button>
             <button class="btn-sm" onclick="adjustTime(+2)">+2 Min</button>
             <button class="btn-sm" onclick="adjustTime(+5)">+5 Min</button>
           </div>
 
-          <div class="preview-box dim-in-focus">
+          <div class="preview-box">
             <div>
               <div class="preview-label">Als Nächstes</div>
               <div id="next-phase-title" class="preview-name">—</div>
@@ -586,28 +599,29 @@
             <div id="next-phase-meta" class="badge">-- Min</div>
           </div>
 
-          <!-- Steuerleiste -->
+          <!-- Steuerleiste: "Pause" durch "Puffer hierher" ersetzt -->
           <div class="action-row">
             <button id="btn-next" class="btn" onclick="nextPhase()">Nächste ❯</button>
             
-            <button id="btn-time-adjust" class="btn btn-crunch dim-in-focus" onclick="executePacingAdjustment()">
+            <button id="btn-time-adjust" class="btn btn-crunch" onclick="executePacingAdjustment()">
               ⚡ Stauchen
             </button>
             
-            <button id="btn-buffer-toggle" class="btn btn-warning dim-in-focus" onclick="toggleBufferStatus()" title="Puffer überspringen oder wiederherstellen">
+            <button id="btn-buffer-toggle" class="btn btn-warning" onclick="toggleBufferStatus()" title="Puffer überspringen oder wiederherstellen">
               ⏭ Kein Puffer
             </button>
-            <button id="btn-pause" class="btn btn-secondary dim-in-focus" onclick="togglePause()">Pause</button>
+            <button id="btn-transfer-buffer" class="btn btn-secondary" onclick="transferNextBufferToCurrentPhase()" title="Bucht Minuten des nächsten Puffers auf die laufende Phase">
+              ➕ Puffer hierher
+            </button>
           </div>
 
         </div>
       </div>
 
-      <!-- Verlaufsplan Tabelle -->
+      <!-- Verlaufsplan Tabelle (Wird im Fokusmodus dezent gedimmt) -->
       <div class="card plan-card dim-in-focus">
         <div class="plan-header">
           <span>STUNDENVERLAUFSPLAN</span>
-          <span style="font-weight: normal; color: var(--text-muted); font-size: 0.72rem;">Fortschrittslinie wandert in aktiver Zeile</span>
         </div>
         <div style="overflow-x: auto;">
           <table class="plan-table">
@@ -621,15 +635,32 @@
               </tr>
             </thead>
             <tbody id="plan-table-body">
-              <!-- Dynamisch befüllt -->
             </tbody>
           </table>
         </div>
       </div>
 
+      <!-- Button "Stunde beenden" (umbenannt) -->
       <button class="btn btn-danger dim-in-focus" style="padding: 10px; font-size: 0.85rem;" onclick="finishLessonEarly()">
-        Stunde abschließen & Auswertung
+        Stunde beenden
       </button>
+
+      <!-- Slot-Speicherleiste ganz unten -->
+      <div class="card dim-in-focus" style="margin-top: 4px;">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+          STUNDE AUF EINEM SPEICHERPLATZ HINTERLEGEN
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
+          <input type="text" id="slot-name-input" placeholder="Kürzel (z.B. M-7 Mo, Ch-J2 Di)" style="flex: 1; background: #0c1322; border: 1px solid var(--card-border); color: var(--text); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem;">
+        </div>
+        <div class="slot-grid">
+          <button class="btn-sm" onclick="saveCurrentPlanToSlot(0)">In [Slot 1] sichern</button>
+          <button class="btn-sm" onclick="saveCurrentPlanToSlot(1)">In [Slot 2] sichern</button>
+          <button class="btn-sm" onclick="saveCurrentPlanToSlot(2)">In [Slot 3] sichern</button>
+          <button class="btn-sm" onclick="saveCurrentPlanToSlot(3)">In [Slot 4] sichern</button>
+          <button class="btn-sm" onclick="saveCurrentPlanToSlot(4)">In [Slot 5] sichern</button>
+        </div>
+      </div>
 
     </div>
 
@@ -653,7 +684,6 @@
               </tr>
             </thead>
             <tbody id="summary-table-body">
-              <!-- Dynamisch -->
             </tbody>
           </table>
         </div>
@@ -678,7 +708,6 @@
     let isGongEnabled = false;
     let gongHasPlayedThisPhase = false;
     let isFocusMode = false;
-    let isCompactMode = false;
 
     let phasePlannedSec = 0;
     let phaseRemainingSec = 0;
@@ -686,6 +715,12 @@
     let lessonTotalElapsedSec = 0;
 
     const pasteTarget = document.getElementById('paste-target');
+
+    function clearPasteBox() {
+      pasteTarget.innerText = "";
+      localStorage.removeItem('unterricht_draft_v20');
+      pasteTarget.focus();
+    }
 
     function checkAndUnpackPlanCode(text) {
       if (!text) return "";
@@ -695,9 +730,7 @@
           const b64 = trimmed.substring(5).trim();
           const decoded = decodeURIComponent(escape(atob(b64)));
           return decoded;
-        } catch(e) {
-          console.warn("Konnte PLAN: Code nicht dekodieren", e);
-        }
+        } catch(e) {}
       }
       return text;
     }
@@ -709,15 +742,75 @@
         pasteTarget.innerText = unpacked;
         raw = unpacked;
       }
-      localStorage.setItem('unterricht_draft_v18', raw);
+      localStorage.setItem('unterricht_draft_v20', raw);
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('unterricht_draft_v18');
+      const saved = localStorage.getItem('unterricht_draft_v20');
       if (saved && saved.trim()) {
         pasteTarget.innerText = checkAndUnpackPlanCode(saved);
       }
+      renderSlotButtons();
     });
+
+    // 5 SPEICHER-SLOTS VERWALTUNG
+    function getStoredSlots() {
+      try {
+        return JSON.parse(localStorage.getItem('unterricht_slots_v20') || '[null,null,null,null,null]');
+      } catch(e) {
+        return [null, null, null, null, null];
+      }
+    }
+
+    function renderSlotButtons() {
+      const slots = getStoredSlots();
+      for (let i = 0; i < 5; i++) {
+        const btn = document.getElementById(`slot-btn-${i}`);
+        if (!btn) continue;
+        if (slots[i] && slots[i].name) {
+          btn.textContent = `[${i+1}] ${slots[i].name}`;
+          btn.className = "btn-slot has-content";
+          btn.title = `Klick zum Laden: ${slots[i].name}`;
+        } else {
+          btn.textContent = `[${i+1}] Leer`;
+          btn.className = "btn-slot";
+          btn.title = "Leer";
+        }
+      }
+    }
+
+    function saveCurrentPlanToSlot(slotIndex) {
+      const nameInput = document.getElementById('slot-name-input');
+      const slotName = nameInput.value.trim() || `Stunde ${slotIndex+1}`;
+      const planText = pasteTarget.innerText.trim();
+
+      if (!planText) {
+        alert("Kein Unterrichtsplan zum Speichern vorhanden.");
+        return;
+      }
+
+      const slots = getStoredSlots();
+      slots[slotIndex] = {
+        name: slotName,
+        text: planText,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem('unterricht_slots_v20', JSON.stringify(slots));
+      renderSlotButtons();
+      alert(`Stunde erfolgreich in [Slot ${slotIndex+1}] als "${slotName}" gespeichert!`);
+    }
+
+    function loadFromSlot(slotIndex) {
+      const slots = getStoredSlots();
+      if (!slots[slotIndex] || !slots[slotIndex].text) {
+        alert(`Slot ${slotIndex+1} ist noch leer.`);
+        return;
+      }
+      pasteTarget.innerText = slots[slotIndex].text;
+      localStorage.setItem('unterricht_draft_v20', slots[slotIndex].text);
+      document.getElementById('slot-name-input').value = slots[slotIndex].name;
+      alert(`"${slots[slotIndex].name}" aus Slot ${slotIndex+1} geladen!`);
+    }
 
     function copyPlanTransferCode() {
       let text = pasteTarget.innerText.trim();
@@ -730,7 +823,7 @@
         const b64 = btoa(unescape(encodeURIComponent(text)));
         const transferCode = "PLAN:" + b64;
         navigator.clipboard.writeText(transferCode).then(() => {
-          alert("Kompakter Plan-Code in die Zwischenablage kopiert!\n\nFüge diesen Code (PLAN:...) einfach auf dem Handy in das Textfeld ein.");
+          alert("Plan-Code (PLAN:...) in Zwischenablage kopiert!");
         });
       } catch(e) {
         alert("Fehler beim Erstellen des Plan-Codes.");
@@ -780,7 +873,7 @@
       isGongEnabled = !isGongEnabled;
       const btn = document.getElementById('btn-gong');
       btn.classList.toggle('active', isGongEnabled);
-      btn.title = isGongEnabled ? "Akustischer Gong bei Phasenende (Aktuell: AN)" : "Akustischer Gong bei Phasenende (Aktuell: AUS)";
+      btn.title = isGongEnabled ? "Gong: AN" : "Gong: AUS";
       if (isGongEnabled) playChime();
     }
 
@@ -788,18 +881,8 @@
       isFocusMode = !isFocusMode;
       document.body.classList.toggle('focus-mode', isFocusMode);
       const btn = document.getElementById('btn-toggle-focus');
-      btn.textContent = isFocusMode ? "🎯 Fokus: AN" : "🎯 Fokus: AUS";
-      btn.style.borderColor = isFocusMode ? "#38bdf8" : "#334155";
-      btn.style.color = isFocusMode ? "#38bdf8" : "#64748b";
-    }
-
-    function toggleCompactMode() {
-      isCompactMode = !isCompactMode;
-      document.body.classList.toggle('compact-mode', isCompactMode);
-      const btn = document.getElementById('btn-toggle-compact');
-      btn.textContent = isCompactMode ? "📱 Kompakt: AN" : "📱 Kompakt: AUS";
-      btn.style.borderColor = isCompactMode ? "#38bdf8" : "#334155";
-      btn.style.color = isCompactMode ? "#38bdf8" : "#64748b";
+      btn.style.color = isFocusMode ? "#38bdf8" : "#94a3b8";
+      btn.style.borderColor = isFocusMode ? "#38bdf8" : "#2d3f58";
     }
 
     function transferNextBufferToCurrentPhase() {
@@ -831,7 +914,7 @@
       alert(`+${addMin} Minuten aus Puffer "${buf.name}" wurden der aktuellen Phase gutgeschrieben!`);
     }
 
-    // Touch Wischgesten
+    // Touch Wischgesten: Links = Nächste Phase | Rechts = Puffer transferieren
     let touchStartX = 0;
     let touchStartY = 0;
     const cockpitCardEl = document.getElementById('current-phase-cockpit');
@@ -849,7 +932,7 @@
         if (deltaX < 0) {
           nextPhase();
         } else {
-          togglePause();
+          transferNextBufferToCurrentPhase();
         }
       }
     }, { passive: true });
@@ -875,8 +958,8 @@
     }
 
     function loadSamplePlan() {
-      pasteTarget.innerText = `Zeit\n\nPhase\n\nInhalt\n\nSoz./Meth.\n\nMedien\n\n[07:45]\n5'\n\nBegrüßung +\nAnwesenheit\n\nNotentabelle 7c öffnen\nFrage des Tages:\n\nLV\n\n📘\n\n10'\n\nEinstieg\n\nDavid im Rechenstreit: Projektion des Terms mit den Aussagen von „David das Dreieck“ (wütend: „Ergebnis ist 8!“, frustriert: „Mein Taschenrechner sagt !“). Murmelphase (1'): Wer hat recht? Sammeln der Schülermeinungen.\n\nUG / Murmelphase\n\nTafel / Visualizer, Zeichnung David\n\n15'\n\nErarbeitung\n\nSystematisierung der Vorfahrtsregeln: Auflösen des Konflikts. Klärung der Notwendigkeit: „Klapps“ reicht bei Potenzen nicht mehr aus. Erarbeitung der Hierarchie an der Tafel (Klammern Potenzen Punkt Strich) anhand des Begriffs Term und der Bindungsstärken.\n\nLSG / Dialog\n\nTafelbild\n\n13'\n\nIkonische Sicherung\n\nDas Klapopustri-Monster: Schüler:innen gestalten im Merkheft ihr eigenes Monster mit den Symbolen als Körperteilen (Klammern als Hörner, Potenzen als Augen/Krone, Punktrechnung als Mund, Strichrechnung als Beine).\n\nEA (kreative Gestaltung)\n\nMerkheft, Farbstifte, Vorlage Tafelmonster\n\n5'\n\nPause\n\nLüften / Bewegen / Trinken\n\n22'\n\nÜbungsphase (differenziert)\n\nAufgabentraining (Buch S. 10/11):\n• Basis (AFB I): Schrittweises Abarbeiten von Termen (S. 10, Nr. 2 Spalten 1 & 2).\n• Erweitert (AFB II): Bruchterme mit Potenzen und Vorzeichen (S. 10, Nr. 4 Spalten 1 & 2).\n• Fehler-Detektiv (AFB III): Finden und sprachliches Begründen typischer Schülerfehler (S. 10, Nr. 6).\n\nPA (Lerntandems) / EA\n\nSchulbuch S. 10/11, Hilfekarten am Pult\n\n10'\n\nBesprechung & Reflexion\n\nBesprechung typischer Hürden (z. B. Punkt-vor-Strich-Verstoß, Vorrang in Klammern, Potenzieren negativer Basen). Schülerinnen und Schüler präsentieren ausgewählte Lösungswege an der Tafel.\n\nPlenum / Schülerpräsentation\n\nTafel\n\n5'\n\nPuffer [Puffer]\n\nFlexibler Puffer für methodische Verzögerungen oder Zusatzknobelei: Setzen von Klammern in vorgegebene Terme, um ein Zielergebnis zu erreichen.\n\nEA / Plenum\n\nTafel\n\n5'\n\nAbschluss [Ziel]\n\nKurze Zusammenfassung der Stunde durch Schüler:innen\nKontrollfragen & Ausblick\n\nPlenum / Daumenprobe\n\nTafel\n\n[09:20]\nEnde`;
-      localStorage.setItem('unterricht_draft_v18', pasteTarget.innerText);
+      pasteTarget.innerText = `Zeit\n\nPhase\n\nInhalt\n\nSoz./Meth.\n\nMedien\n\n[07:45]\n5'\n\nBegrüßung +\nAnwesenheit\n\nNotentabelle 7c öffnen\nFrage des Tages:\n\nLV\n\n📘\n\n10'\n\nEinstieg\n\nDavid im Rechenstreit: Projektion des Terms mit den Aussagen von „David das Dreieck“ (wütend: „Ergebnis ist 8!“, frustriert: „Mein Taschenrechner sagt !“). Murmelphase (1'): Wer hat recht? Sammeln der Schülermeinungen.\n\nUG / Murmelphase\n\nTafel / Visualizer, Zeichnung David\n\n15'\n\nErarbeitung\n\nSystematisierung der Vorfahrtsregeln: Auflösen des Konflikts. Klärung der Notwendigkeit: „Klapps“ reicht bei Potenzen nicht mehr aus. Erarbeitung der Hierarchie an der Tafel (Klammern Potenzen Punkt Strich) anhand des Begriffs Term und der Bindungsstärken.\n\nLSG / Dialog\n\nTafelbild\n\n13'\n\nIkonische Sicherung\n\nDas Klapopustri-Monster: Schüler:innen gestalten im Merkheft ihr eigenes Monster mit den Symbolen als Körperteilen (Klammern als Hörner, Potenzen als Augen/Krone, Punktrechnung als Mund, Strichrechnung als Beine).\n\nEA (kreative Gestaltung)\n\nMerkheft, Farbstifte, Vorlage Tafelmonster\n\n5'\n\nPause\n\nLüften / Bewegen / Trinken\n\n22'\n\nÜbungsphase (differenziert)\n\nAufgabentraining (Buch S. 10/11):\n• Basis (AFB I): Schrittweises Abarbeiten von Termen (S. 10, Nr. 2 Spalten 1 & 2).\n• Erweitert (AFB II): Bruchterme mit Potenzen und Vorzeichen (S. 10, Nr. 4 Spalten 1 & 2).\n• Fehler-Detektiv (AFB III): Finden und sprachliches Begründen typischer Schülerfehler (S. 10, Nr. 6).\n\nPA (Lerntandems) / EA\n\nSchulbuch S. 10/11, Hilfekarten am Pult\n\n10'\n\nBesprechung & Reflexion\n\nBesprechung typischer Hürden (z. B. Punkt-vor-Strich-Verstoß, Vorrang in Klammern, Potenzieren negativer Basen). Schülerinnen und Schüler präsentieren ausgewählte Lösungswege an der Tafel.\n\nPlenum / Schülerpräsentation\n\nTafel\n\n5'\n\nPuffer [Puffer]\n\nFlexibler Puffer für methodische Verzögerungen oder Zusatzknobelei: Setzen von Klammern in vorgegebene Terme, um ein Zielergebnis zu erreichen.\n\nEA / Plenum\n\nTafel\n\n5'\n\nAbschluss [Ziel]\n\nKurze Zusammenfassung der Stunde durch Schüler:innen\nKontrollfragen & Ausblick\n\nPlenum / Daumenprobe\n\nTafel\n\n[09:20]\n[Stunden-Ende]`;
+      localStorage.setItem('unterricht_draft_v20', pasteTarget.innerText);
     }
 
     function formatContentLegacy(contentRaw) {
@@ -886,184 +969,160 @@
       return items.join('; ');
     }
 
-    /* 
-      UNIVERSALER PARSER:
-      Entscheidet zuverlässig zwischen Desktop-Blöcken und Mobile-TSV.
-    */
+    /* PARSER ENGINE */
     function parseUniversalInput(text) {
-      const rawBlocks = text.split(/\n\s*\n+/).map(b => b.trim()).filter(b => b.length > 0);
-      if (rawBlocks.length < 5 && text.indexOf('\t') !== -1) {
-        return parseMobileTsv(text);
-      }
-      return parseDesktopClean(text);
-    }
-
-    // --- KLASSIFIZIERUNG VON INHALT, SOZ/METH UND MEDIEN ---
-    function classifyBlocksSmart(rawPhaseBlocks) {
+      const timeRegex = /\[?(\d{1,2}:\d{2})\]?/;
+      const durRegex = /^(\d{1,3})['´’]$|^(\d{1,3})\s*min$/i;
+      const headerKeywords = ['zeit', 'phase', 'inhalt', 'soz./meth.', 'soz/meth', 'sozialform', 'methode', 'medien', 'soz.'];
       const sozRegex = /\b(LV|LSG|EA|GA|PA|PL|PLENUM|SV|UG|DIALOG|MURMELPHASE|DAUMENPROBE|LERNTANDEMS|STILLARBEIT|PARTNERARBEIT)\b/i;
       const mediaIcons = /[📗📘📕🧾📖👨🏻‍🏫🗨️🖥️👥]/;
       const mediaWords = /\b(tafel|visualizer|merkheft|schulbuch|hilfekarten|tafelbild|zeichnung|farbstifte|vorlage|folie|regelheft|arbeitsblatt|geogebra|skizze)\b/i;
-      const negFilter = /\b(aufgabe|systematisierung|klapopustri|schrittweises|hierarchie|david)\b/i;
 
-      let sozMeth = "";
-      let medien = "";
-      let inhalt = [];
-
-      for (let b of rawPhaseBlocks) {
-        let bClean = b.trim();
-        if (!bClean) continue;
-
-        let isSoz = (bClean.length < 50) && sozRegex.test(bClean) && !/\b(aufgabe|seite|buch|term|übung|systematisierung|besprechung)\b/i.test(bClean);
-        let hasMediaIcon = mediaIcons.test(bClean);
-        let isMediaShort = (bClean.length < 70) && mediaWords.test(bClean) && !negFilter.test(bClean);
-        let isMedien = hasMediaIcon || isMediaShort;
-
-        if (isSoz && !sozMeth) {
-          sozMeth = bClean.replace(/\n/g, ', ');
-        } else if (isMedien && !medien) {
-          medien = bClean.replace(/\n/g, ' ');
+      let rawBlocks = text.split(/\n\s*\n+/).map(b => b.trim()).filter(b => b.length > 0);
+      
+      let normalizedBlocks = [];
+      for (let b of rawBlocks) {
+        if (b.indexOf('\t') !== -1) {
+          let lines = b.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+          for (let l of lines) {
+            let cells = l.split('\t').map(c => c.trim()).filter(c => c.length > 0);
+            for (let c of cells) normalizedBlocks.push(c);
+          }
         } else {
-          inhalt.push(bClean.replace(/\n/g, ' '));
+          normalizedBlocks.push(b);
         }
       }
 
-      return {
-        inhalt: inhalt.join('; '),
-        sozMeth: sozMeth,
-        medien: medien
-      };
-    }
-
-    // --- PARSER FÜR ONENOTE DESKTOP-BLÖCKE ---
-    function parseDesktopClean(text) {
-      const timeRegex = /\[?(\d{1,2}:\d{2})\]?/;
-      const durInlineRegex = /(\d{1,3})['´’]|(\d{1,3})\s*min/i;
-      const headerKeywords = ['zeit', 'phase', 'inhalt', 'soz./meth.', 'soz/meth', 'sozialform', 'methode', 'medien', 'soz.'];
-      const endeRegex = /\b(ende|stundenende|schlussgong)\b/i;
-
-      const rawBlocks = text.split(/\n\s*\n+/).map(b => b.trim()).filter(b => b.length > 0);
-      while (rawBlocks.length > 0 && (headerKeywords.indexOf(rawBlocks[0].toLowerCase()) !== -1 || /zeit\s+phase/i.test(rawBlocks[0]))) {
-        rawBlocks.shift();
+      while (normalizedBlocks.length > 0 && (headerKeywords.indexOf(normalizedBlocks[0].toLowerCase()) !== -1 || /zeit\s+phase/i.test(normalizedBlocks[0]))) {
+        normalizedBlocks.shift();
       }
 
-      const parsed = [];
       hardEndData = null;
 
-      let startH = 7, startM = 45;
-      for (let b of rawBlocks) {
-        let tm = b.match(timeRegex);
-        if (tm) {
-          let parts = tm[1].split(':').map(Number);
-          startH = parts[0];
-          startM = parts[1];
-          break;
+      if (normalizedBlocks.length > 0) {
+        let lastB = normalizedBlocks[normalizedBlocks.length - 1];
+        if (lastB.toLowerCase().indexOf('[stunden-ende]') !== -1 || lastB.toLowerCase().indexOf('stunden-ende') !== -1 || lastB.toLowerCase() === 'ende') {
+          normalizedBlocks.pop();
+          if (normalizedBlocks.length > 0 && timeRegex.test(normalizedBlocks[normalizedBlocks.length - 1])) {
+            let tm = normalizedBlocks.pop().match(timeRegex);
+            let eParts = tm[1].split(':').map(Number);
+            hardEndData = {
+              timeStr: `[${tm[1]}]`,
+              clock: tm[1],
+              totalSecFromDayStart: eParts[0] * 3600 + eParts[1] * 60
+            };
+          }
+        } else if (timeRegex.test(lastB) && lastB.split(/\s+/).length <= 2) {
+          let tm = normalizedBlocks.pop().match(timeRegex);
+          let eParts = tm[1].split(':').map(Number);
+          hardEndData = {
+            timeStr: `[${tm[1]}]`,
+            clock: tm[1],
+            totalSecFromDayStart: eParts[0] * 3600 + eParts[1] * 60
+          };
         }
+      }
+
+      let phaseChunks = [];
+      let currChunk = [];
+
+      for (let b of normalizedBlocks) {
+        let lines = b.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        let hasTime = lines.some(l => timeRegex.test(l));
+        let hasDur = lines.some(l => durRegex.test(l));
+
+        if (currChunk.length === 1 && timeRegex.test(currChunk[0]) && hasDur) {
+          currChunk.push(b);
+        } else if (hasTime || hasDur) {
+          if (currChunk.length > 0) phaseChunks.push(currChunk);
+          currChunk = [b];
+        } else {
+          if (currChunk.length > 0) currChunk.push(b);
+          else currChunk = [b];
+        }
+      }
+      if (currChunk.length > 0) phaseChunks.push(currChunk);
+
+      let startH = 7, startM = 45;
+      for (let ch of phaseChunks) {
+        let found = false;
+        for (let b of ch) {
+          let tm = b.match(timeRegex);
+          if (tm) {
+            let parts = tm[1].split(':').map(Number);
+            startH = parts[0]; startM = parts[1];
+            found = true; break;
+          }
+        }
+        if (found) break;
       }
 
       let currentClockSec = startH * 3600 + startM * 60;
       let accumulatedSec = 0;
+      const parsed = [];
 
-      let bIdx = 0;
-      while (bIdx < rawBlocks.length) {
-        let block = rawBlocks[bIdx];
+      for (let ch of phaseChunks) {
+        let pTime = null;
+        let pDur = null;
+        let remainingBlocks = [];
 
-        // Echte Ende-Erkennung mit Wortgrenzen und Längenbegrenzung (verhindert 'dominierenden')
-        let isEndBlock = (block.length < 30) && endeRegex.test(block);
+        for (let b of ch) {
+          let lines = b.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          let isAnchorBlock = false;
 
-        if (isEndBlock) {
-          let tm = block.match(timeRegex);
-          let endClock = tm ? tm[1] : null;
-          if (!endClock && bIdx > 0 && timeRegex.test(rawBlocks[bIdx - 1])) {
-            endClock = rawBlocks[bIdx - 1].match(timeRegex)[1];
+          for (let l of lines) {
+            let tm = l.match(timeRegex);
+            let dm = l.match(durRegex);
+            if (tm && !pTime) {
+              pTime = tm[1];
+              isAnchorBlock = true;
+            } else if (dm && !pDur) {
+              pDur = parseInt(dm[1] || dm[2], 10);
+              isAnchorBlock = true;
+            }
           }
-          if (!endClock && (bIdx + 1) < rawBlocks.length && timeRegex.test(rawBlocks[bIdx + 1])) {
-            endClock = rawBlocks[bIdx + 1].match(timeRegex)[1];
-          }
-          if (!endClock) {
-            let curH = Math.floor(currentClockSec / 3600) % 24;
-            let curM = Math.floor((currentClockSec % 3600) / 60);
-            endClock = `${String(curH).padStart(2,'0')}:${String(curM).padStart(2,'0')}`;
-          }
 
-          let eParts = endClock.split(':').map(Number);
-          hardEndData = {
-            timeStr: `[${endClock}]`,
-            clock: endClock,
-            totalSecFromDayStart: eParts[0] * 3600 + eParts[1] * 60,
-            plannedCumulativeSec: accumulatedSec
-          };
-          break;
+          let nonMetaLines = lines.filter(l => !timeRegex.test(l) && !durRegex.test(l));
+          if (nonMetaLines.length > 0) {
+            remainingBlocks.push(nonMetaLines.join('\n'));
+          } else if (!isAnchorBlock) {
+            remainingBlocks.push(b);
+          }
         }
 
-        let phaseTime = null;
-        let phaseDur = null;
+        let phaseName = remainingBlocks.length > 0 ? remainingBlocks[0].replace(/\n/g, ' ') : "Phase";
+        let rawContentBlocks = remainingBlocks.slice(1);
 
-        // 1. Konsumiere alle Zeit- und Dauer-Blöcke (z.B. "[07:45]", "5'", "10'", etc.)
-        while (bIdx < rawBlocks.length) {
-          let b = rawBlocks[bIdx];
-          if ((b.length < 30) && endeRegex.test(b)) break;
+        let sozMeth = "";
+        let medien = "";
+        let inhalt = [];
 
-          let tm = b.match(timeRegex);
-          let dm = b.match(durInlineRegex);
-          let cleanB = b.replace(durInlineRegex, '').replace(timeRegex, '').trim();
+        for (let b of rawContentBlocks) {
+          let bClean = b.trim();
+          if (!bClean) continue;
 
-          let isTimeDurOnly = (cleanB === '' || ['[ziel]', 'ziel', '[puffer]', 'puffer'].indexOf(cleanB.toLowerCase()) !== -1);
+          let isSoz = (bClean.length < 50) && sozRegex.test(bClean) && !/\b(aufgabe|seite|buch|term|übung|systematisierung|besprechung)\b/i.test(bClean);
+          let hasMediaIcon = mediaIcons.test(bClean);
+          let isMediaShort = (bClean.length < 60) && mediaWords.test(bClean) && !/\b(aufgabe|systematisierung|klapopustri|schrittweises|hierarchie)\b/i.test(bClean);
+          let isMedien = hasMediaIcon || isMediaShort;
 
-          if (isTimeDurOnly && (tm || dm)) {
-            if (tm && !phaseTime) {
-              phaseTime = tm[1];
-              let tParts = phaseTime.split(':').map(Number);
-              currentClockSec = tParts[0] * 3600 + tParts[1] * 60;
-            }
-            if (dm && !phaseDur) {
-              phaseDur = parseInt(dm[1] || dm[2], 10);
-            }
-            bIdx++;
+          if (isSoz && !sozMeth) {
+            sozMeth = bClean.replace(/\n/g, ', ');
+          } else if (isMedien && !medien) {
+            medien = bClean.replace(/\n/g, ' ');
           } else {
-            break;
+            inhalt.push(bClean.replace(/\n/g, ' '));
           }
         }
 
-        if (bIdx >= rawBlocks.length) break;
-        if ((rawBlocks[bIdx].length < 30) && endeRegex.test(rawBlocks[bIdx])) continue;
-
-        // 2. Der nächste Block ist der Phasen-Name!
-        let phaseName = rawBlocks[bIdx].replace(/\n/g, ' ');
-        bIdx++;
-
-        let dmName = phaseName.match(durInlineRegex);
-        if (dmName && !phaseDur) {
-          phaseDur = parseInt(dmName[1] || dmName[2], 10);
-          phaseName = phaseName.replace(durInlineRegex, '').trim();
-        }
-
-        // 3. Sammle alle Inhaltsblöcke bis zum nächsten Zeit/Dauer/Ende-Block
-        let rawPhaseBlocks = [];
-        while (bIdx < rawBlocks.length) {
-          let b = rawBlocks[bIdx];
-          if ((b.length < 30) && endeRegex.test(b)) break;
-
-          let tm = b.match(timeRegex);
-          let dm = b.match(durInlineRegex);
-          let cleanB = b.replace(durInlineRegex, '').replace(timeRegex, '').trim();
-          if ((cleanB === '' || ['[ziel]', 'ziel', '[puffer]', 'puffer'].indexOf(cleanB.toLowerCase()) !== -1) && (tm || dm)) {
-            break;
-          }
-
-          rawPhaseBlocks.push(b);
-          bIdx++;
-        }
-
-        // 4. Intelligente Zuordnung auf die Tabellenspalten
-        let classified = classifyBlocksSmart(rawPhaseBlocks);
-
-        let duration = phaseDur || 10;
+        let duration = pDur || 10;
         let curH = Math.floor(currentClockSec / 3600) % 24;
         let curM = Math.floor((currentClockSec % 3600) / 60);
-        let timeStr = phaseTime || `${String(curH).padStart(2,'0')}:${String(curM).padStart(2,'0')}`;
+        let timeStr = pTime || `${String(curH).padStart(2,'0')}:${String(curM).padStart(2,'0')}`;
 
-        let isBuffer = phaseName.toLowerCase().indexOf('puffer') !== -1 || classified.inhalt.toLowerCase().indexOf('puffer') !== -1;
-        let isGoal = phaseName.toLowerCase().indexOf('ziel') !== -1 || classified.inhalt.toLowerCase().indexOf('ziel') !== -1;
+        let inhaltStr = inhalt.join('; ');
+        let isBuffer = phaseName.toLowerCase().indexOf('puffer') !== -1 || inhaltStr.toLowerCase().indexOf('puffer') !== -1;
+        let isGoal = phaseName.toLowerCase().indexOf('ziel') !== -1 || inhaltStr.toLowerCase().indexOf('ziel') !== -1;
 
         parsed.push({
           timeStr: `[${timeStr}]`,
@@ -1073,9 +1132,9 @@
           plannedCumulativeSec: accumulatedSec,
           actualSec: 0,
           name: phaseName,
-          content: classified.inhalt,
-          sozMeth: classified.sozMeth,
-          medien: classified.medien,
+          content: inhaltStr,
+          sozMeth: sozMeth,
+          medien: medien,
           isBuffer: isBuffer,
           isGoal: isGoal,
           startDelaySec: 0,
@@ -1086,169 +1145,21 @@
         currentClockSec += duration * 60;
       }
 
+      if (!hardEndData && parsed.length > 0) {
+        let endH = Math.floor(currentClockSec / 3600) % 24;
+        let endM = Math.floor((currentClockSec % 3600) / 60);
+        let clockStr = `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}`;
+        hardEndData = {
+          timeStr: `[${clockStr}]`,
+          clock: clockStr,
+          totalSecFromDayStart: currentClockSec,
+          plannedCumulativeSec: accumulatedSec
+        };
+      } else if (hardEndData) {
+        hardEndData.plannedCumulativeSec = accumulatedSec;
+      }
+
       return parsed;
-    }
-
-    // --- PARSER FÜR ONENOTE MOBILE TSV-FORMAT ---
-    function parseMobileTsv(text) {
-      const timeRegex = /\[?(\d{1,2}:\d{2})\]?/;
-      const durRegex = /^(\d{1,3})['´’]$|^(\d{1,3})\s*min$/i;
-      const sozList = ['LV', 'LSG', 'EA', 'GA', 'PA', 'PL', 'SV', 'EA/PA', 'EA / PA', 'UG', 'DIALOG', 'MURMELPHASE', 'STILLARBEIT', 'PARTNERARBEIT'];
-
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      const parsedPhases = [];
-      hardEndData = null;
-
-      let currentPhase = null;
-      let pendingTime = null;
-
-      for (let l of lines) {
-        if (/zeit/i.test(l) && /phase/i.test(l)) continue;
-        let parts = l.split('\t');
-
-        // Check Ende
-        if (parts.some(p => (p.length < 30) && /\b(ende|stundenende|schlussgong)\b/i.test(p))) {
-          let endClock = null;
-          for (let p of parts) {
-            let tm = p.match(timeRegex);
-            if (tm) endClock = tm[1];
-          }
-          if (!endClock && pendingTime) endClock = pendingTime;
-          if (endClock) {
-            let eParts = endClock.split(':').map(Number);
-            hardEndData = {
-              timeStr: `[${endClock}]`,
-              clock: endClock,
-              totalSecFromDayStart: eParts[0] * 3600 + eParts[1] * 60
-            };
-          }
-          if (currentPhase) {
-            parsedPhases.push(currentPhase);
-            currentPhase = null;
-          }
-          continue;
-        }
-
-        if (parts.length === 1 && timeRegex.test(parts[0])) {
-          pendingTime = parts[0].match(timeRegex)[1];
-          continue;
-        }
-
-        let firstCol = parts[0].trim();
-        let secondCol = parts.length > 1 ? parts[1].trim() : "";
-
-        let startsNew = false;
-        if (timeRegex.test(firstCol) && secondCol) {
-          startsNew = true;
-        } else if (pendingTime && (durRegex.test(firstCol) || parts.length >= 2)) {
-          startsNew = true;
-        }
-
-        if (startsNew) {
-          if (currentPhase) parsedPhases.push(currentPhase);
-
-          let pTime = pendingTime || (timeRegex.test(firstCol) ? firstCol.match(timeRegex)[1] : null);
-          pendingTime = null;
-
-          let pDur = null;
-          let pName = "";
-          let pContent = [];
-          let pSoz = "";
-          let pMed = "";
-
-          let dMatch = firstCol.match(durRegex);
-          if (dMatch) pDur = parseInt(dMatch[1] || dMatch[2], 10);
-
-          if (parts.length > 1) pName = parts[1].trim();
-          if (parts.length > 2 && parts[2].trim()) pContent.push(parts[2].trim());
-          if (parts.length > 3 && parts[3].trim()) pSoz = parts[3].trim();
-          if (parts.length > 4 && parts[4].trim()) pMed = parts[4].trim();
-
-          currentPhase = {
-            time: pTime,
-            duration: pDur,
-            name: pName,
-            content: pContent,
-            soz: pSoz,
-            medien: pMed
-          };
-        } else {
-          if (!currentPhase) continue;
-
-          let dMatch = firstCol.match(durRegex);
-          if (dMatch && !currentPhase.duration) {
-            currentPhase.duration = parseInt(dMatch[1] || dMatch[2], 10);
-          }
-
-          if (parts.length >= 5) {
-            if (parts[2].trim()) currentPhase.content.push(parts[2].trim());
-            if (parts[3].trim() && !currentPhase.soz) currentPhase.soz = parts[3].trim();
-            if (parts[4].trim() && !currentPhase.medien) currentPhase.medien = parts[4].trim();
-          } else if (parts.length === 3 && !secondCol) {
-            if (parts[2].trim()) currentPhase.content.push(parts[2].trim());
-          } else {
-            for (let p of parts) {
-              let pClean = p.trim();
-              if (!pClean) continue;
-              if (sozList.indexOf(pClean) !== -1) {
-                currentPhase.soz = pClean;
-              } else if (/[📗📘📕🧾📖👨🏻‍🏫🗨️🖥️👥]|tafel|buch|arbeitsblatt/i.test(pClean)) {
-                currentPhase.medien += (currentPhase.medien ? " " : "") + pClean;
-              } else {
-                currentPhase.content.push(pClean);
-              }
-            }
-          }
-        }
-      }
-
-      if (currentPhase) parsedPhases.push(currentPhase);
-
-      // Finalize Mobile
-      const result = [];
-      let startH = 7, startM = 45;
-      for (let item of parsedPhases) {
-        if (item.time) {
-          let parts = item.time.split(':').map(Number);
-          startH = parts[0];
-          startM = parts[1];
-          break;
-        }
-      }
-
-      let curSec = startH * 3600 + startM * 60;
-      let accSec = 0;
-      for (let item of parsedPhases) {
-        let dur = item.duration || 10;
-        let curH = Math.floor(curSec / 3600) % 24;
-        let curM = Math.floor((curSec % 3600) / 60);
-        let tStr = item.time || `${String(curH).padStart(2,'0')}:${String(curM).padStart(2,'0')}`;
-
-        result.push({
-          timeStr: `[${tStr}]`,
-          plannedStartClock: tStr,
-          plannedMin: dur,
-          plannedSec: dur * 60,
-          plannedCumulativeSec: accSec,
-          actualSec: 0,
-          name: item.name,
-          content: item.content.join('; '),
-          sozMeth: item.soz,
-          medien: item.medien,
-          isBuffer: item.name.toLowerCase().indexOf('puffer') !== -1,
-          isGoal: item.name.toLowerCase().indexOf('ziel') !== -1,
-          startDelaySec: 0,
-          skipped: false
-        });
-        accSec += dur * 60;
-        curSec += dur * 60;
-      }
-
-      if (hardEndData) {
-        hardEndData.plannedCumulativeSec = accSec;
-      }
-
-      return result;
     }
 
     // --- STUNDEN-ABLAUF ---
@@ -1427,16 +1338,17 @@
       updateDisplay();
     }
 
+    /* VORZEICHEN-KORREKTUR: "13 Min Vorsprung" (grün) bzw. "4 Min Verzug" (rot) */
     function updateDelayBadge(delaySec) {
       const delayBadge = document.getElementById('delay-status-badge');
       const delayMin = Math.round(delaySec / 60);
 
       if (delayMin > 0) {
         delayBadge.className = 'badge badge-delay';
-        delayBadge.textContent = `+${delayMin} Min Verzug`;
-      } else if (delayMin < -1) {
+        delayBadge.textContent = `${delayMin} Min Verzug`;
+      } else if (delayMin < 0) {
         delayBadge.className = 'badge badge-ontime';
-        delayBadge.textContent = `${delayMin} Min Vorsprung`;
+        delayBadge.textContent = `${Math.abs(delayMin)} Min Vorsprung`;
       } else {
         delayBadge.className = 'badge badge-ontime';
         delayBadge.textContent = `Im Zeitplan`;
@@ -1490,15 +1402,15 @@
 
       if (deltaSec > 45) {
         btn.textContent = `⚡ Stauchen (-${deltaMin}')`;
-        btn.className = "btn btn-crunch dim-in-focus";
+        btn.className = "btn btn-crunch";
         btn.title = `${deltaMin} Min abziehen, um pünktlich um ${hardEndData ? hardEndData.clock : ''} zu schließen`;
       } else if (deltaSec < -45) {
         btn.textContent = `⏳ Strecken (+${deltaMin}')`;
-        btn.className = "btn btn-stretch dim-in-focus";
+        btn.className = "btn btn-stretch";
         btn.title = `${deltaMin} Min verteilen, um bis zum Gong (${hardEndData ? hardEndData.clock : ''}) zu füllen`;
       } else {
         btn.textContent = "⚡ Im Zeitplan";
-        btn.className = "btn btn-secondary dim-in-focus";
+        btn.className = "btn btn-secondary";
         btn.title = `Schließt genau um ${hardEndData ? hardEndData.clock : ''} ab`;
       }
     }
@@ -1578,7 +1490,6 @@
           lessonTotalElapsedSec++;
           phases[currentPhaseIndex].actualSec = phaseElapsedSec;
 
-          // Visuelles Aufleuchten & Gong genau bei 00:00
           if (phaseRemainingSec === 0 && !gongHasPlayedThisPhase) {
             triggerVisualFlash();
             playChime();
@@ -1644,17 +1555,6 @@
       updateDisplay();
     }
 
-    function togglePause() {
-      if (!lessonHasStarted) {
-        beginLessonLive();
-        return;
-      }
-      isPaused = !isPaused;
-      const btn = document.getElementById('btn-pause');
-      btn.textContent = isPaused ? "Weiter" : "Pause";
-      btn.classList.toggle('btn-warning', isPaused);
-    }
-
     function nextPhase() {
       phases[currentPhaseIndex].actualSec = phaseElapsedSec;
       let nextIdx = currentPhaseIndex + 1;
@@ -1670,10 +1570,10 @@
 
       if (anySkippedBuffer) {
         btn.textContent = "↩ Puffer nutzen";
-        btn.className = "btn btn-success dim-in-focus";
+        btn.className = "btn btn-success";
       } else {
         btn.textContent = "⏭ Kein Puffer";
-        btn.className = "btn btn-warning dim-in-focus";
+        btn.className = "btn btn-warning";
       }
     }
 
@@ -1756,7 +1656,7 @@
     }
 
     function finishLessonEarly() {
-      if (confirm("Unterricht beenden und Auswertung anzeigen?")) endLesson();
+      if (confirm("Unterricht jetzt beenden und Auswertung ansehen?")) endLesson();
     }
 
     function endLesson() {
@@ -1886,7 +1786,7 @@
 
     function copyResultsAsMarkdown() {
       let md = "| Phase | Typ | Geplant | Tatsächlich | Abweichung |\n";
-      md += "|---|---|---|---|---|\n";
+      md += "|---|---|---|---|---|\\n";
       phases.forEach(p => {
         const diffMin = ((p.actualSec - (p.plannedMin * 60)) / 60).toFixed(1);
         let typ = p.isBuffer ? "Puffer" : (p.isGoal ? "Ziel" : "Standard");
