@@ -41,6 +41,7 @@
       transition: background-color 0.2s ease;
     }
 
+    /* Screen Flash Overlay bei 00:00 */
     #flash-overlay {
       position: fixed;
       inset: 0;
@@ -103,7 +104,7 @@
     .btn-crunch { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; }
     .btn-stretch { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; }
 
-    /* FOKUS-MODUS: Dimmt nur noch den Verlaufsplan darunter ab, Kasten bleibt voll bedienbar */
+    /* FOKUS-MODUS */
     body.focus-mode .dim-in-focus {
       opacity: 0.25;
       transition: opacity 0.25s ease;
@@ -157,6 +158,8 @@
       align-items: center;
       font-size: 0.8rem;
       margin-bottom: 6px;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .badge-group { display: flex; gap: 6px; align-items: center; }
@@ -181,6 +184,14 @@
     .badge-end {
       background: #0284c7;
       color: #fff;
+    }
+
+    /* Alle Zeitangaben oben rechts nebeneinander */
+    .time-cluster-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
     }
 
     .timer-center-row {
@@ -209,28 +220,28 @@
       50% { opacity: 0.55; }
     }
 
-    /* Gong Icon neben Uhrzeit */
-    .btn-gong-inline {
-      width: 28px;
-      height: 28px;
+    /* Glockensymbol wieder direkt neben dem Timer */
+    .btn-gong {
+      position: absolute;
+      right: 4px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: #1e293b;
       border: 1px solid #334155;
       color: #64748b;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
+      font-size: 1.2rem;
       cursor: pointer;
       transition: all 0.15s ease;
-      vertical-align: middle;
-      padding: 0;
     }
-    .btn-gong-inline.active {
+    .btn-gong.active {
       background: rgba(245, 158, 11, 0.2);
       border-color: var(--warning);
       color: var(--warning);
-      box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
     }
 
     .progress-bar-bg {
@@ -294,9 +305,10 @@
       font-size: 0.85rem;
     }
 
+    /* Steuerleiste mit rotem Beenden-Knopf ganz rechts */
     .action-row {
       display: grid;
-      grid-template-columns: 2fr 1.2fr 1.2fr 1.3fr;
+      grid-template-columns: 2fr 1.15fr 1.15fr 1.1fr 0.9fr;
       gap: 6px;
       margin-top: 8px;
     }
@@ -412,14 +424,14 @@
     .tag-goal { background: #059669; color: #fff; }
     .tag-hard-end { background: #0284c7; color: #fff; }
 
-    /* Slot Button Leiste */
+    /* Slot-Leiste */
     .slot-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
     }
     .btn-slot {
-      padding: 7px 4px;
+      padding: 8px 4px;
       font-size: 0.78rem;
       font-weight: 600;
       background: #1e293b;
@@ -477,13 +489,13 @@
 
       <!-- Buttonleiste direkt ÜBER dem Eingabefeld -->
       <div class="card" style="padding: 10px 14px;">
-        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
           <button class="btn btn-secondary" style="flex:1" onclick="loadSamplePlan()">Beispiel</button>
           <button class="btn" style="flex:2" onclick="loadLessonData()">Unterricht laden ❯</button>
           <button class="btn btn-danger" style="padding: 8px 14px;" onclick="clearPasteBox()" title="Eingabefeld leeren">✕</button>
         </div>
 
-        <!-- 5 Schnellspeicher-Slots -->
+        <!-- 5 Schnellauswahl-Slots (Laden) -->
         <div style="margin-bottom: 10px;">
           <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-weight: 600;">
             Hinterlegte Stunden (Klick zum Laden):
@@ -497,7 +509,26 @@
           </div>
         </div>
 
+        <!-- Textfeld -->
         <div id="paste-target" class="paste-box" contenteditable="true" placeholder="Tabelle aus OneNote hier einfügen..."></div>
+
+        <!-- Speicher-Leiste für Slots direkt auf der Startseite (sichert den Originaltext!) -->
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--card-border);">
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-weight: 600;">
+            Aktuellen Text als vorbereitete Stunde sichern:
+          </div>
+          <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+            <input type="text" id="slot-name-input" placeholder="Kürzel eingeben (z. B. M-7 Mo, Ch-J2 Di)" style="flex:1; background: #0c1322; border: 1px solid var(--card-border); color: var(--text); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem;">
+          </div>
+          <div class="slot-grid">
+            <button class="btn-sm" onclick="saveCurrentPlanToSlot(0)">In [Slot 1] sichern</button>
+            <button class="btn-sm" onclick="saveCurrentPlanToSlot(1)">In [Slot 2] sichern</button>
+            <button class="btn-sm" onclick="saveCurrentPlanToSlot(2)">In [Slot 3] sichern</button>
+            <button class="btn-sm" onclick="saveCurrentPlanToSlot(3)">In [Slot 4] sichern</button>
+            <button class="btn-sm" onclick="saveCurrentPlanToSlot(4)">In [Slot 5] sichern</button>
+          </div>
+        </div>
+
       </div>
 
       <!-- Schätzprofil Card -->
@@ -537,25 +568,24 @@
         <div id="current-phase-cockpit" class="card cockpit-card">
           
           <div class="top-meta-bar">
+            <!-- Linke Seite: Phase und Status -->
             <div class="badge-group">
               <span id="lesson-progress-badge" class="badge">Phase 1 / 5</span>
               <span id="delay-status-badge" class="badge badge-ontime">Im Zeitplan</span>
-              <span id="hard-end-badge" class="badge badge-end">Gong: --:--</span>
             </div>
             
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <!-- Fokus-Button jetzt im Kasten links neben "Jetzt syncen" -->
+            <!-- Rechte Seite: Alle Zeiten & Steuerungen nebeneinander -->
+            <div class="time-cluster-right">
+              <span id="running-end-estimate" style="color: var(--primary); font-weight: 600;">Ende ca: --:--</span>
+              <span id="hard-end-badge" class="badge badge-end">Gong: --:--</span>
+              <span id="realtime-clock" style="color: var(--text); font-weight: 700;">12:00</span>
+              
               <button id="btn-toggle-focus" class="btn-sm" style="padding: 3px 8px; background: #0c1322;" onclick="toggleFocusMode()">
                 Fokus
               </button>
               <button class="btn-sm" style="padding: 3px 8px; background: #0c1322;" onclick="syncWithRealClock()" title="Springt zur geplanten Phase gemäß aktueller Uhrzeit">
                 ⏱ Jetzt syncen
               </button>
-              <!-- Gong-Button inline direkt neben der Uhrzeit -->
-              <button id="btn-gong" class="btn-gong-inline" onclick="toggleGong()" title="Akustischer Gong bei Phasenende (Aktuell: AUS)">
-                🔔
-              </button>
-              <span id="realtime-clock" style="color: var(--text-muted); font-weight: 600;">12:00</span>
             </div>
           </div>
 
@@ -569,9 +599,12 @@
           
           <div id="current-phase-name" style="font-size: 1.35rem; font-weight: 800; margin: 1px 0; color: #fff;">Begrüßung</div>
 
-          <!-- Timer -->
+          <!-- Timer & Glockensymbol wieder rechts neben der Zeit -->
           <div class="timer-center-row">
             <div id="timer-display" class="timer-display">05:00</div>
+            <button id="btn-gong" class="btn-gong" onclick="toggleGong()" title="Akustischer Gong bei Phasenende (Aktuell: AUS)">
+              🔔
+            </button>
           </div>
           
           <div class="progress-bar-bg">
@@ -580,7 +613,6 @@
 
           <div class="delay-info-strip">
             <span id="phase-planned-time">Geplant: 5 Min</span>
-            <span id="running-end-estimate" style="color: var(--primary);">Ende ca: --:--</span>
             <span id="phase-elapsed-time">Verstrichen: 00:00</span>
           </div>
 
@@ -599,7 +631,7 @@
             <div id="next-phase-meta" class="badge">-- Min</div>
           </div>
 
-          <!-- Steuerleiste: "Pause" durch "Puffer hierher" ersetzt -->
+          <!-- Steuerleiste mit rotem Beenden-Knopf ganz rechts -->
           <div class="action-row">
             <button id="btn-next" class="btn" onclick="nextPhase()">Nächste ❯</button>
             
@@ -611,14 +643,17 @@
               ⏭ Kein Puffer
             </button>
             <button id="btn-transfer-buffer" class="btn btn-secondary" onclick="transferNextBufferToCurrentPhase()" title="Bucht Minuten des nächsten Puffers auf die laufende Phase">
-              ➕ Puffer hierher
+              ➕ Puffer
+            </button>
+            <button class="btn btn-danger" onclick="finishLessonEarly()" title="Unterricht beenden">
+              ⏹ Beenden
             </button>
           </div>
 
         </div>
       </div>
 
-      <!-- Verlaufsplan Tabelle (Wird im Fokusmodus dezent gedimmt) -->
+      <!-- Verlaufsplan Tabelle (Im Fokus-Modus dezent abgedunkelt) -->
       <div class="card plan-card dim-in-focus">
         <div class="plan-header">
           <span>STUNDENVERLAUFSPLAN</span>
@@ -640,27 +675,10 @@
         </div>
       </div>
 
-      <!-- Button "Stunde beenden" (umbenannt) -->
+      <!-- Button "Stunde beenden" unten -->
       <button class="btn btn-danger dim-in-focus" style="padding: 10px; font-size: 0.85rem;" onclick="finishLessonEarly()">
         Stunde beenden
       </button>
-
-      <!-- Slot-Speicherleiste ganz unten -->
-      <div class="card dim-in-focus" style="margin-top: 4px;">
-        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
-          STUNDE AUF EINEM SPEICHERPLATZ HINTERLEGEN
-        </div>
-        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
-          <input type="text" id="slot-name-input" placeholder="Kürzel (z.B. M-7 Mo, Ch-J2 Di)" style="flex: 1; background: #0c1322; border: 1px solid var(--card-border); color: var(--text); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem;">
-        </div>
-        <div class="slot-grid">
-          <button class="btn-sm" onclick="saveCurrentPlanToSlot(0)">In [Slot 1] sichern</button>
-          <button class="btn-sm" onclick="saveCurrentPlanToSlot(1)">In [Slot 2] sichern</button>
-          <button class="btn-sm" onclick="saveCurrentPlanToSlot(2)">In [Slot 3] sichern</button>
-          <button class="btn-sm" onclick="saveCurrentPlanToSlot(3)">In [Slot 4] sichern</button>
-          <button class="btn-sm" onclick="saveCurrentPlanToSlot(4)">In [Slot 5] sichern</button>
-        </div>
-      </div>
 
     </div>
 
@@ -718,7 +736,7 @@
 
     function clearPasteBox() {
       pasteTarget.innerText = "";
-      localStorage.removeItem('unterricht_draft_v20');
+      localStorage.removeItem('unterricht_draft_v21');
       pasteTarget.focus();
     }
 
@@ -742,21 +760,21 @@
         pasteTarget.innerText = unpacked;
         raw = unpacked;
       }
-      localStorage.setItem('unterricht_draft_v20', raw);
+      localStorage.setItem('unterricht_draft_v21', raw);
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('unterricht_draft_v20');
+      const saved = localStorage.getItem('unterricht_draft_v21');
       if (saved && saved.trim()) {
         pasteTarget.innerText = checkAndUnpackPlanCode(saved);
       }
       renderSlotButtons();
     });
 
-    // 5 SPEICHER-SLOTS VERWALTUNG
+    // 5 SPEICHER-SLOTS VERWALTUNG (Sichert den Originaltext)
     function getStoredSlots() {
       try {
-        return JSON.parse(localStorage.getItem('unterricht_slots_v20') || '[null,null,null,null,null]');
+        return JSON.parse(localStorage.getItem('unterricht_slots_v21') || '[null,null,null,null,null]');
       } catch(e) {
         return [null, null, null, null, null];
       }
@@ -785,7 +803,7 @@
       const planText = pasteTarget.innerText.trim();
 
       if (!planText) {
-        alert("Kein Unterrichtsplan zum Speichern vorhanden.");
+        alert("Kein Unterrichtsplan im Textfeld vorhanden.");
         return;
       }
 
@@ -795,7 +813,7 @@
         text: planText,
         savedAt: new Date().toISOString()
       };
-      localStorage.setItem('unterricht_slots_v20', JSON.stringify(slots));
+      localStorage.setItem('unterricht_slots_v21', JSON.stringify(slots));
       renderSlotButtons();
       alert(`Stunde erfolgreich in [Slot ${slotIndex+1}] als "${slotName}" gespeichert!`);
     }
@@ -807,9 +825,9 @@
         return;
       }
       pasteTarget.innerText = slots[slotIndex].text;
-      localStorage.setItem('unterricht_draft_v20', slots[slotIndex].text);
+      localStorage.setItem('unterricht_draft_v21', slots[slotIndex].text);
       document.getElementById('slot-name-input').value = slots[slotIndex].name;
-      alert(`"${slots[slotIndex].name}" aus Slot ${slotIndex+1} geladen!`);
+      alert(`"${slots[slotIndex].name}" geladen! Klicke auf 'Unterricht laden ❯'.`);
     }
 
     function copyPlanTransferCode() {
@@ -823,7 +841,7 @@
         const b64 = btoa(unescape(encodeURIComponent(text)));
         const transferCode = "PLAN:" + b64;
         navigator.clipboard.writeText(transferCode).then(() => {
-          alert("Plan-Code (PLAN:...) in Zwischenablage kopiert!");
+          alert("Plan-Code (PLAN:...) in Zwischenablage kopiert!\n\nAuf anderem Gerät einfach in das Textfeld einfügen.");
         });
       } catch(e) {
         alert("Fehler beim Erstellen des Plan-Codes.");
@@ -914,7 +932,7 @@
       alert(`+${addMin} Minuten aus Puffer "${buf.name}" wurden der aktuellen Phase gutgeschrieben!`);
     }
 
-    // Touch Wischgesten: Links = Nächste Phase | Rechts = Puffer transferieren
+    // Touch Wischgesten
     let touchStartX = 0;
     let touchStartY = 0;
     const cockpitCardEl = document.getElementById('current-phase-cockpit');
@@ -959,7 +977,7 @@
 
     function loadSamplePlan() {
       pasteTarget.innerText = `Zeit\n\nPhase\n\nInhalt\n\nSoz./Meth.\n\nMedien\n\n[07:45]\n5'\n\nBegrüßung +\nAnwesenheit\n\nNotentabelle 7c öffnen\nFrage des Tages:\n\nLV\n\n📘\n\n10'\n\nEinstieg\n\nDavid im Rechenstreit: Projektion des Terms mit den Aussagen von „David das Dreieck“ (wütend: „Ergebnis ist 8!“, frustriert: „Mein Taschenrechner sagt !“). Murmelphase (1'): Wer hat recht? Sammeln der Schülermeinungen.\n\nUG / Murmelphase\n\nTafel / Visualizer, Zeichnung David\n\n15'\n\nErarbeitung\n\nSystematisierung der Vorfahrtsregeln: Auflösen des Konflikts. Klärung der Notwendigkeit: „Klapps“ reicht bei Potenzen nicht mehr aus. Erarbeitung der Hierarchie an der Tafel (Klammern Potenzen Punkt Strich) anhand des Begriffs Term und der Bindungsstärken.\n\nLSG / Dialog\n\nTafelbild\n\n13'\n\nIkonische Sicherung\n\nDas Klapopustri-Monster: Schüler:innen gestalten im Merkheft ihr eigenes Monster mit den Symbolen als Körperteilen (Klammern als Hörner, Potenzen als Augen/Krone, Punktrechnung als Mund, Strichrechnung als Beine).\n\nEA (kreative Gestaltung)\n\nMerkheft, Farbstifte, Vorlage Tafelmonster\n\n5'\n\nPause\n\nLüften / Bewegen / Trinken\n\n22'\n\nÜbungsphase (differenziert)\n\nAufgabentraining (Buch S. 10/11):\n• Basis (AFB I): Schrittweises Abarbeiten von Termen (S. 10, Nr. 2 Spalten 1 & 2).\n• Erweitert (AFB II): Bruchterme mit Potenzen und Vorzeichen (S. 10, Nr. 4 Spalten 1 & 2).\n• Fehler-Detektiv (AFB III): Finden und sprachliches Begründen typischer Schülerfehler (S. 10, Nr. 6).\n\nPA (Lerntandems) / EA\n\nSchulbuch S. 10/11, Hilfekarten am Pult\n\n10'\n\nBesprechung & Reflexion\n\nBesprechung typischer Hürden (z. B. Punkt-vor-Strich-Verstoß, Vorrang in Klammern, Potenzieren negativer Basen). Schülerinnen und Schüler präsentieren ausgewählte Lösungswege an der Tafel.\n\nPlenum / Schülerpräsentation\n\nTafel\n\n5'\n\nPuffer [Puffer]\n\nFlexibler Puffer für methodische Verzögerungen oder Zusatzknobelei: Setzen von Klammern in vorgegebene Terme, um ein Zielergebnis zu erreichen.\n\nEA / Plenum\n\nTafel\n\n5'\n\nAbschluss [Ziel]\n\nKurze Zusammenfassung der Stunde durch Schüler:innen\nKontrollfragen & Ausblick\n\nPlenum / Daumenprobe\n\nTafel\n\n[09:20]\n[Stunden-Ende]`;
-      localStorage.setItem('unterricht_draft_v20', pasteTarget.innerText);
+      localStorage.setItem('unterricht_draft_v21', pasteTarget.innerText);
     }
 
     function formatContentLegacy(contentRaw) {
@@ -1338,7 +1356,6 @@
       updateDisplay();
     }
 
-    /* VORZEICHEN-KORREKTUR: "13 Min Vorsprung" (grün) bzw. "4 Min Verzug" (rot) */
     function updateDelayBadge(delaySec) {
       const delayBadge = document.getElementById('delay-status-badge');
       const delayMin = Math.round(delaySec / 60);
@@ -1553,6 +1570,19 @@
       if (durEl) durEl.textContent = `${phases[currentPhaseIndex].plannedMin}'`;
 
       updateDisplay();
+    }
+
+    function togglePause() {
+      if (!lessonHasStarted) {
+        beginLessonLive();
+        return;
+      }
+      isPaused = !isPaused;
+      const btn = document.getElementById('btn-pause');
+      if (btn) {
+        btn.textContent = isPaused ? "Weiter" : "Pause";
+        btn.classList.toggle('btn-warning', isPaused);
+      }
     }
 
     function nextPhase() {
