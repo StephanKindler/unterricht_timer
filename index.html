@@ -541,10 +541,26 @@
           Noch keine Verlaufsdaten erfasst.
         </div>
         <div style="display: flex; gap: 6px;">
-          <button class="btn-sm" style="flex: 1;" onclick="exportProfileJson()">💾 In OneDrive sichern</button>
-          <button class="btn-sm" style="flex: 1;" onclick="triggerImportProfileJson()">📥 Aus OneDrive laden</button>
+          <button class="btn-sm" style="flex: 1;" onclick="exportProfileJson()">💾 In Datei sichern</button>
+          <button class="btn-sm" style="flex: 1;" onclick="triggerImportProfileJson()">📥 Aus Datei laden</button>
           <input type="file" id="profile-file-input" style="display:none;" onchange="importProfileJson(event)">
         </div>
+        <!-- GitHub Gist Cloud Sync Einstellungen -->
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--card-border);">
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 6px;">
+            ☁️ GITHUB GIST CLOUD-SYNCHRONISATION
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+            <input type="password" id="gist-token-input" placeholder="GitHub Personal Access Token (ghp_...)" style="background: #0c1322; border: 1px solid var(--card-border); color: var(--text); border-radius: 6px; padding: 7px 10px; font-size: 0.8rem;">
+            <input type="text" id="gist-id-input" placeholder="Gist-ID (z. B. 7a8b9c0d1e2f...)" style="background: #0c1322; border: 1px solid var(--card-border); color: var(--text); border-radius: 6px; padding: 7px 10px; font-size: 0.8rem;">
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-sm" style="flex: 1; background: #0284c7; color: #fff;" onclick="saveGistSettingsAndSync()">💾 Daten speichern & Sync</button>
+            <button class="btn-sm" style="flex: 1;" onclick="fetchFromGist()">⬇️ Aus Cloud laden</button>
+          </div>
+          <div id="gist-status-msg" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;"></div>
+        </div>
+
       </div>
     </div>
 
@@ -845,6 +861,109 @@
         });
       } catch(e) {
         alert("Fehler beim Erstellen des Plan-Codes.");
+      }
+    }
+
+    
+    // --- GITHUB GIST CLOUD SYNCHRONISATION ---
+    function loadGistCredentials() {
+      const token = localStorage.getItem('gh_gist_token') || '';
+      const gistId = localStorage.getItem('gh_gist_id') || '';
+      const tokenInput = document.getElementById('gist-token-input');
+      const gistInput = document.getElementById('gist-id-input');
+      if (tokenInput) tokenInput.value = token;
+      if (gistInput) gistInput.value = gistId;
+    }
+
+    async function saveGistSettingsAndSync() {
+      const token = document.getElementById('gist-token-input').value.trim();
+      const gistId = document.getElementById('gist-id-input').value.trim();
+      const statusEl = document.getElementById('gist-status-msg');
+
+      if (!token || !gistId) {
+        alert("Bitte gib sowohl das GitHub Token als auch die Gist-ID ein.");
+        return;
+      }
+
+      localStorage.setItem('gh_gist_token', token);
+      localStorage.setItem('gh_gist_id', gistId);
+      statusEl.textContent = "Verbinde mit GitHub Gist...";
+
+      await pushToGist();
+    }
+
+    async function pushToGist() {
+      const token = localStorage.getItem('gh_gist_token');
+      const gistId = localStorage.getItem('gh_gist_id');
+      const statusEl = document.getElementById('gist-status-msg');
+      if (!token || !gistId) return;
+
+      const profileData = localStorage.getItem('unterricht_zeitprofil') || '{}';
+
+      try {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            files: {
+              'unterricht_profil.json': {
+                content: profileData
+              }
+            }
+          })
+        });
+
+        if (response.ok) {
+          if (statusEl) statusEl.textContent = `✅ Zuletzt synchronisiert: ${new Date().toLocaleTimeString()}`;
+        } else {
+          const err = await response.json();
+          if (statusEl) statusEl.textContent = `❌ Fehler: ${err.message || response.statusText}`;
+        }
+      } catch (e) {
+        if (statusEl) statusEl.textContent = `❌ Netzwerkfehler: ${e.message}`;
+      }
+    }
+
+    async function fetchFromGist() {
+      const token = localStorage.getItem('gh_gist_token');
+      const gistId = localStorage.getItem('gh_gist_id');
+      const statusEl = document.getElementById('gist-status-msg');
+
+      if (!token || !gistId) {
+        alert("Bitte zuerst Token und Gist-ID hinterlegen.");
+        return;
+      }
+
+      if (statusEl) statusEl.textContent = "Lade Daten von GitHub...";
+
+      try {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const file = data.files['unterricht_profil.json'];
+          if (file && file.content) {
+            localStorage.setItem('unterricht_zeitprofil', file.content);
+            if (statusEl) statusEl.textContent = `✅ Daten erfolgreich aus Cloud geladen! (${new Date().toLocaleTimeString()})`;
+            showProfileView();
+          } else {
+            if (statusEl) statusEl.textContent = "⚠️ Gist enthält noch keine 'unterricht_profil.json'. Sende Daten mit 'Speichern & Sync'.";
+          }
+        } else {
+          const err = await response.json();
+          if (statusEl) statusEl.textContent = `❌ Fehler: ${err.message || response.statusText}`;
+        }
+      } catch (e) {
+        if (statusEl) statusEl.textContent = `❌ Netzwerkfehler: ${e.message}`;
       }
     }
 
@@ -1754,9 +1873,11 @@
 
       localStorage.setItem('unterricht_zeitprofil', JSON.stringify(profile));
       copyResultsAsMarkdown();
+      pushToGist();
     }
 
     function showProfileView() {
+      loadGistCredentials();
       const container = document.getElementById('profile-container');
       const content = document.getElementById('profile-stats-content');
       container.style.display = 'block';
